@@ -651,15 +651,6 @@ require('lazy').setup({
               and vim.fs.root(0, { 'tsconfig.json', 'package.json', 'jsconfig.json', 'bun.lockb', '.git' })
           end,
         },
-        ts_ls = {
-          root_dir = function(fname)
-            local util = require('lspconfig').util
-            return not util.root_pattern('deno.json', 'deno.jsonc')(fname)
-              and util.root_pattern('tsconfig.json', 'package.json', 'jsconfig.json', '.git')(fname)
-          end,
-          single_file_support = false,
-          settings = {},
-        },
         lua_ls = {
           -- cmd = { ... },
           -- filetypes = { ... },

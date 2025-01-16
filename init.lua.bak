@@ -236,7 +236,50 @@ require('lazy').setup({
   --
   -- Use `opts = {}` to force a plugin to be loaded.
   --
+  {
+    'goolord/alpha-nvim',
+    dependencies = {
+      'nvim-tree/nvim-web-devicons',
+    },
 
+    config = function()
+      local alpha = require 'alpha'
+      local dashboard = require 'alpha.themes.startify'
+
+      dashboard.section.header.val = {
+        [[ $$$$$$\            $$\ $$\          $$\    $$\ $$$$$$\ $$\      $$\ ]],
+        [[$$  __$$\           $$ |$$ |         $$ |   $$ |\_$$  _|$$$\    $$$ |]],
+        [[$$ /  \__| $$$$$$\  $$ |$$ | $$$$$$\ $$ |   $$ |  $$ |  $$$$\  $$$$ |]],
+        [[$$ |      $$  __$$\ $$ |$$ |$$  __$$\\$$\  $$  |  $$ |  $$\$$\$$ $$ |]],
+        [[$$ |      $$$$$$$$ |$$ |$$ |$$ /  $$ |\$$\$$  /   $$ |  $$ \$$$  $$ |]],
+        [[$$ |  $$\ $$   ____|$$ |$$ |$$ |  $$ | \$$$  /    $$ |  $$ |\$  /$$ |]],
+        [[\$$$$$$  |\$$$$$$$\ $$ |$$ |\$$$$$$  |  \$  /   $$$$$$\ $$ | \_/ $$ |]],
+        [[ \______/  \_______|\__|\__| \______/    \_/    \______|\__|     \__|]],
+      }
+
+      alpha.setup(dashboard.opts)
+    end,
+  },
+  {
+    'kdheepak/lazygit.nvim',
+    lazy = true,
+    cmd = {
+      'LazyGit',
+      'LazyGitConfig',
+      'LazyGitCurrentFile',
+      'LazyGitFilter',
+      'LazyGitFilterCurrentFile',
+    },
+    -- optional for floating window border decoration
+    dependencies = {
+      'nvim-lua/plenary.nvim',
+    },
+    -- setting the keybinding for LazyGit with 'keys' is recommended in
+    -- order to load the plugin when the command is run for the first time
+    keys = {
+      { '<leader>lg', '<cmd>LazyGit<cr>', desc = 'LazyGit' },
+    },
+  },
   -- Here is a more advanced example where we pass configuration
   -- options to `gitsigns.nvim`. This is equivalent to the following Lua:
   --    require('gitsigns').setup({ ... })
@@ -560,6 +603,8 @@ require('lazy').setup({
           --  For example, in C this would take you to the header.
           map('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
 
+          -- Goto Type definition
+          map('<leader>td', vim.lsp.buf.hover, 'Variable [T]ype [D]efinition')
           -- The following two autocommands are used to highlight references of the
           -- word under your cursor when your cursor rests there for a little while.
           --    See `:help CursorHold` for information about when this is executed
@@ -652,13 +697,11 @@ require('lazy').setup({
           end,
         },
         ts_ls = {
-          root_dir = function(fname)
-            local util = require('lspconfig').util
-            return not util.root_pattern('deno.json', 'deno.jsonc')(fname)
-              and util.root_pattern('tsconfig.json', 'package.json', 'jsconfig.json', '.git')(fname)
-          end,
           single_file_support = false,
-          settings = {},
+          root_dir = function()
+            return not vim.fs.root(0, { 'deno.json', 'deno.jsonc' })
+              and vim.fs.root(0, { 'tsconfig.json', 'package.json', 'jsconfig.json', 'bun.lockb', '.git' })
+          end,
         },
         lua_ls = {
           -- cmd = { ... },

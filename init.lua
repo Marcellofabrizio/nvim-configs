@@ -1,5 +1,5 @@
-require 'core.options'
 require 'core.keymaps'
+require 'core.options'
 
 local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
@@ -12,18 +12,18 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 require('lazy').setup {
-  --  require 'plugins.alpha',
-  --  require 'plugins.autocomplete',
-  --  require 'plugins.autoformat',
+  require 'plugins.alpha',
+  require 'plugins.autocomplete',
+  require 'plugins.autoformat',
   require 'plugins.colorscheme',
-  --  require 'plugins.debug',
-  --  require 'plugins.gitsigns',
-  --  require 'plugins.lazygit',
-  --  require 'plugins.lint',
-  --  require 'plugins.lsp',
-  --  require 'plugins.misc',
+  require 'plugins.debug',
+  require 'plugins.gitsigns',
+  require 'plugins.lazygit',
+  require 'plugins.lint',
+  require 'plugins.lsp',
+  require 'plugins.misc',
   require 'plugins.neotree',
   require 'plugins.telescope',
-  require 'plugins.tmux',
   require 'plugins.treesitter',
+  require 'plugins.vim_tmux_navigator',
 }

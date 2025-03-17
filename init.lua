@@ -16,6 +16,7 @@ require('lazy').setup {
   require 'plugins.autocomplete',
   require 'plugins.autoformat',
   require 'plugins.colorscheme',
+  require 'plugins.comment-vim',
   require 'plugins.debug',
   require 'plugins.gitsigns',
   require 'plugins.lazygit',

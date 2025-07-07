@@ -12,6 +12,7 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 require('lazy').setup {
+  require 'plugins.mason',
   require 'plugins.alpha',
   require 'plugins.autocomplete',
   require 'plugins.autoformat',

@@ -19,7 +19,13 @@ return {
 
     -- Installs the debug adapters for you
     'williamboman/mason.nvim',
-    'jay-babu/mason-nvim-dap.nvim',
+    {
+      'jay-babu/mason-nvim-dap.nvim',
+      optional = true,
+      opts = function(_, opts)
+        opts.ensure_installed = require('astrocore').list_insert_unique(opts.ensure_installed, { 'delve' })
+      end,
+    },
 
     -- Add your own debuggers here
     'leoluz/nvim-dap-go',

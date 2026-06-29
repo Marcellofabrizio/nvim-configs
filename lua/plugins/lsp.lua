@@ -3,16 +3,16 @@ return {
   'neovim/nvim-lspconfig',
   dependencies = {
     -- Automatically install LSPs and related tools to stdpath for Neovim
-    { 'williamboman/mason.nvim', config = true }, -- NOTE: Must be loaded before dependants
-    'williamboman/mason-lspconfig.nvim',
+    -- Mason must be loaded before its dependents so we need to set it up here.
+    -- NOTE: `opts = {}` is the same as calling `require('mason').setup({})`
+    { 'mason-org/mason.nvim', opts = {} },
     'WhoIsSethDaniel/mason-tool-installer.nvim',
 
     -- Useful status updates for LSP.
-    -- NOTE: `opts = {}` is the same as calling `require('fidget').setup({})`
     { 'j-hui/fidget.nvim', opts = {} },
 
-    -- Allows extra capabilities provided by nvim-cmp
-    'hrsh7th/cmp-nvim-lsp',
+    -- Allows extra capabilities provided by blink.cmp
+    'saghen/blink.cmp',
   },
   config = function()
     -- Brief aside: **What is LSP?**
@@ -137,32 +137,15 @@ return {
       end,
     })
 
-    -- Change diagnostic symbols in the sign column (gutter)
-    if vim.g.have_nerd_font then
-      local signs = { ERROR = '', WARN = '', INFO = '', HINT = '' }
-      local diagnostic_signs = {}
-      for type, icon in pairs(signs) do
-        diagnostic_signs[vim.diagnostic.severity[type]] = icon
-      end
-      vim.diagnostic.config { signs = { text = diagnostic_signs } }
-    end
-
     -- LSP servers and clients are able to communicate to each other what features they support.
     --  By default, Neovim doesn't support everything that is in the LSP specification.
-    --  When you add nvim-cmp, luasnip, etc. Neovim now has *more* capabilities.
-    --  So, we create new capabilities with nvim cmp, and then broadcast that to the servers.
-    local capabilities = vim.lsp.protocol.make_client_capabilities()
-    capabilities = vim.tbl_deep_extend('force', capabilities, require('cmp_nvim_lsp').default_capabilities())
+    --  When you add blink.cmp, luasnip, etc. Neovim now has *more* capabilities.
+    --  So, we create new capabilities with blink.cmp, and then broadcast that to the servers.
+    local capabilities = require('blink.cmp').get_lsp_capabilities()
 
     -- Enable the following language servers
     --  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
-    --
-    --  Add any additional override configuration in the following tables. Available keys are:
-    --  - cmd (table): Override the default command used to start the server
-    --  - filetypes (table): Override the default list of associated filetypes for the server
-    --  - capabilities (table): Override fields in capabilities. Can be used to disable certain LSP features.
-    --  - settings (table): Override the default settings passed when initializing the server.
-    --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
+    --  See `:help lsp-config` for information about keys and how to configure
     local servers = {
       -- clangd = {},
       gopls = {
@@ -178,23 +161,18 @@ return {
       -- But for many setups, the LSP (`ts_ls`) will work just fine
       jsonls = {},
 
-      denols = {
-        root_dir = require('lspconfig').util.root_pattern { 'deno.json' },
+      ts_ls = {
+        root_dir = require('lspconfig').util.root_pattern { 'package.json', 'tsconfig.json' },
         single_file_support = false,
         settings = {},
       },
-      vtsls = {
+
+      denols = {
+        root_dir = require('lspconfig').util.root_pattern { 'deno.json', 'deno.jsonc' },
         single_file_support = false,
-        root_dir = function()
-          return not vim.fs.root(0, { 'deno.json', 'deno.jsonc' }) and vim.fs.root(0, { 'tsconfig.json', 'package.json', 'jsconfig.json', 'bun.lockb', '.git' })
-        end,
+        settings = {},
       },
-      ts_ls = {
-        single_file_support = false,
-        root_dir = function()
-          return not vim.fs.root(0, { 'deno.json', 'deno.jsonc' }) and vim.fs.root(0, { 'tsconfig.json', 'package.json', 'jsconfig.json', 'bun.lockb', '.git' })
-        end,
-      },
+
       lua_ls = {
         -- cmd = { ... },
         -- filetypes = { ... },
@@ -212,33 +190,54 @@ return {
     }
 
     -- Ensure the servers and tools above are installed
-    --  To check the current status of installed tools and/or manually install
-    --  other tools, you can run
+    --
+    -- To check the current status of installed tools and/or manually install
+    -- other tools, you can run
     --    :Mason
     --
-    --  You can press `g?` for help in this menu.
-    require('mason').setup()
-
-    -- You can add other tools here that you want Mason to install
-    -- for you, so that they are available from within Neovim.
+    -- You can press `g?` for help in this menu.
     local ensure_installed = vim.tbl_keys(servers or {})
     vim.list_extend(ensure_installed, {
+      'lua_ls', -- Lua Language server
       'stylua', -- Used to format Lua code
+      -- You can add other tools here that you want Mason to install
     })
+
     require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
-    require('mason-lspconfig').setup {
-      automatic_enable = true,
-      handlers = {
-        function(server_name)
-          local server = servers[server_name] or {}
-          -- This handles overriding only values explicitly passed
-          -- by the server configuration above. Useful when disabling
-          -- certain features of an LSP (for example, turning off formatting for ts_ls)
-          server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-          require('lspconfig')[server_name].setup(server)
-        end,
+    for name, server in pairs(servers) do
+      server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
+      vim.lsp.config(name, server)
+      vim.lsp.enable(name)
+    end
+
+    -- Special Lua Config, as recommended by neovim help docs
+    vim.lsp.config('lua_ls', {
+      on_init = function(client)
+        if client.workspace_folders then
+          local path = client.workspace_folders[1].name
+          if path ~= vim.fn.stdpath 'config' and (vim.uv.fs_stat(path .. '/.luarc.json') or vim.uv.fs_stat(path .. '/.luarc.jsonc')) then
+            return
+          end
+        end
+
+        client.config.settings.Lua = vim.tbl_deep_extend('force', client.config.settings.Lua, {
+          runtime = {
+            version = 'LuaJIT',
+            path = { 'lua/?.lua', 'lua/?/init.lua' },
+          },
+          workspace = {
+            checkThirdParty = false,
+            -- NOTE: this is a lot slower and will cause issues when working on your own configuration.
+            --  See https://github.com/neovim/nvim-lspconfig/issues/3189
+            library = vim.api.nvim_get_runtime_file('', true),
+          },
+        })
+      end,
+      settings = {
+        Lua = {},
       },
-    }
+    })
+    vim.lsp.enable 'lua_ls'
   end,
 }

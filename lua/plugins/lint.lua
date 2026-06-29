@@ -5,9 +5,9 @@ return {
     event = { 'BufReadPre', 'BufNewFile' },
     config = function()
       local lint = require 'lint'
-      lint.linters_by_ft = {
-        markdown = { 'markdownlint' },
-      }
+      -- lint.linters_by_ft = {
+      --   markdown = { 'markdownlint' },
+      -- },
 
       -- To allow other plugins to add linters to require('lint').linters_by_ft,
       -- instead set linters_by_ft like this:
@@ -16,18 +16,18 @@ return {
       --
       -- However, note that this will enable a set of default linters,
       -- which will cause errors unless these tools are available:
-      -- {
+      {
+        json = { "jsonlint" },
+        markdown = { "vale" }
       --   clojure = { "clj-kondo" },
       --   dockerfile = { "hadolint" },
       --   inko = { "inko" },
       --   janet = { "janet" },
-      --   json = { "jsonlint" },
-      --   markdown = { "vale" },
       --   rst = { "vale" },
       --   ruby = { "ruby" },
       --   terraform = { "tflint" },
       --   text = { "vale" }
-      -- }
+      }
       --
       -- You can disable the default linters by setting their filetypes to nil:
       -- lint.linters_by_ft['clojure'] = nil

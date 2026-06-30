@@ -41,7 +41,6 @@ return {
       'awk',
       'jq',
       'json',
-      'jsonc',
       'json5',
       'printf',
       'vim',

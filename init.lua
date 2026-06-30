@@ -14,7 +14,7 @@ vim.opt.rtp:prepend(lazypath)
 require('lazy').setup {
   require 'plugins.mason',
   require 'plugins.alpha',
-  require 'plugins.autocomplete',
+  --require 'plugins.autocomplete',
   require 'plugins.autoformat',
   require 'plugins.colorscheme',
   require 'plugins.comment-vim',
@@ -29,5 +29,5 @@ require('lazy').setup {
   require 'plugins.treesitter',
   require 'plugins.vim_tmux_navigator',
   --require 'plugins.copilot',
-  require 'plugins.swagger_preview',
+  --require 'plugins.swagger_preview',
 }
